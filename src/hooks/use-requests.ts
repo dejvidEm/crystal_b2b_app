@@ -19,51 +19,43 @@ import type {
 } from "@/types";
 
 export function useDashboardStats(role: UserRole | undefined) {
-  const supabase = createClient();
-
   return useQuery({
     queryKey: [...queryKeys.dashboard, role],
-    queryFn: () => fetchDashboardStats(supabase, role ?? "partner"),
+    queryFn: () =>
+      fetchDashboardStats(createClient(), role ?? "partner"),
     enabled: Boolean(role),
   });
 }
 
 export function useRequests(status?: RequestStatus) {
-  const supabase = createClient();
-
   return useQuery({
     queryKey: queryKeys.requests.list({ status }),
-    queryFn: () => fetchRequests(supabase, { status }),
+    queryFn: () => fetchRequests(createClient(), { status }),
   });
 }
 
 export function useCalendarRequests(from: string, to: string) {
-  const supabase = createClient();
-
   return useQuery({
     queryKey: queryKeys.requests.calendar(from, to),
-    queryFn: () => fetchCalendarRequests(supabase, from, to),
+    queryFn: () => fetchCalendarRequests(createClient(), from, to),
     enabled: Boolean(from && to),
   });
 }
 
 export function useRequestDetail(id: string) {
-  const supabase = createClient();
-
   return useQuery({
     queryKey: queryKeys.requests.detail(id),
-    queryFn: () => fetchRequestDetail(supabase, id),
+    queryFn: () => fetchRequestDetail(createClient(), id),
     enabled: Boolean(id),
   });
 }
 
 export function useCreateRequest() {
-  const supabase = createClient();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (input: CreateServiceRequestInput) =>
-      createServiceRequest(supabase, input),
+      createServiceRequest(createClient(), input),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.requests.all });
       await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
@@ -72,7 +64,6 @@ export function useCreateRequest() {
 }
 
 export function useUpdateRequestStatus() {
-  const supabase = createClient();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -84,7 +75,7 @@ export function useUpdateRequestStatus() {
       requestId: string;
       status: RequestStatus;
       adminNote?: string;
-    }) => updateRequestStatus(supabase, requestId, status, adminNote),
+    }) => updateRequestStatus(createClient(), requestId, status, adminNote),
     onSuccess: async (_data, variables) => {
       toast.success("Stav požiadavky bol aktualizovaný");
       await queryClient.invalidateQueries({

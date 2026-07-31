@@ -6,7 +6,7 @@ export function createClient() {
 
   if (!url || !key) {
     throw new Error(
-      "Chýbajú NEXT_PUBLIC_SUPABASE_URL alebo NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.",
+      "Chýbajú NEXT_PUBLIC_SUPABASE_URL alebo NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY. Nastav ich vo Vercel Environment Variables a sprav Redeploy.",
     );
   }
 

@@ -6,11 +6,9 @@ import { fetchProfile } from "@/lib/queries/requests";
 import { queryKeys } from "@/lib/queries/keys";
 
 export function useProfile() {
-  const supabase = createClient();
-
   return useQuery({
     queryKey: queryKeys.profile,
-    queryFn: () => fetchProfile(supabase),
+    queryFn: () => fetchProfile(createClient()),
     staleTime: 5 * 60_000,
   });
 }
