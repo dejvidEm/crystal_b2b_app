@@ -1,36 +1,175 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Crystal B2B Partner Portal
 
-## Getting Started
+Private B2B web application for Crystal Detailing Bratislava and its partners (dealerships, fleets, rentals, transfer companies).
 
-First, run the development server:
+Production URL: https://btob.crystaldetailing.sk
+
+Partners submit service requests (date, package, vehicles). Crystal confirms, rejects, or completes them from the admin dashboard and calendar.
+
+## Stack
+
+- Next.js (App Router) + TypeScript (strict)
+- Tailwind CSS
+- Supabase Auth + Postgres (RLS)
+- TanStack Query, React Hook Form, Zod
+- date-fns (sk locale), Lucide, Sonner
+- shadcn-style Radix UI primitives
+
+## Local setup
+
+1. Clone the repository and install dependencies:
+
+```bash
+npm install
+```
+
+2. Copy environment variables:
+
+```bash
+cp .env.example .env.local
+```
+
+3. Create a Supabase project and fill `.env.local`:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_publishable_or_anon_key
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+Use the **publishable** (anon) key only. Never put the service-role key in this app.
+
+4. Apply the migrations in the Supabase SQL Editor (or CLI), in order:
+
+- `supabase/migrations/001_initial_schema.sql`
+- `supabase/migrations/002_vehicle_service_packages.sql`
+
+Optional seed helpers: `supabase/seed.sql`
+
+5. Configure Auth URLs in Supabase → Authentication → URL configuration:
+
+- Site URL (local): `http://localhost:3000`
+- Redirect URLs: `http://localhost:3000/**`
+
+For production:
+
+- Site URL: `https://btob.crystaldetailing.sk`
+- Redirect URLs: `https://btob.crystaldetailing.sk/**`
+
+6. Start the app:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Create the first Crystal admin
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. In Supabase Dashboard → Authentication → Users, create a user (email + password).
+2. Copy the user UUID.
+3. Run:
 
-## Learn More
+```sql
+update public.profiles
+set
+  role = 'admin',
+  organization_id = null,
+  full_name = 'Crystal Admin',
+  is_active = true
+where id = 'ADMIN_USER_UUID';
+```
 
-To learn more about Next.js, take a look at the following resources:
+Admin accounts are never created automatically. New Auth users default to `partner`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Create a partner organization and user
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. Insert an organization:
+
+```sql
+insert into public.organizations (name, company_id, billing_email, phone, service_address, is_active)
+values (
+  'AutoPartner Bratislava s.r.o.',
+  '12345678',
+  'fleet@example.sk',
+  '+421900000000',
+  'Príkladná 12, Bratislava',
+  true
+)
+returning id;
+```
+
+2. Create the partner Auth user in the Dashboard.
+3. Assign the profile:
+
+```sql
+update public.profiles
+set
+  role = 'partner',
+  organization_id = 'ORGANIZATION_UUID',
+  full_name = 'Ján Partner',
+  is_active = true
+where id = 'PARTNER_USER_UUID';
+```
+
+## Roles and access
+
+| Role | Navigation | Data access |
+|------|------------|-------------|
+| `admin` | Prehľad, Kalendár | All organizations and requests; status updates via RPC |
+| `partner` | Prehľad, Nová požiadavka, Moje požiadavky, Kalendár | Own organization only; create via `create_service_request` RPC |
+
+Authorization is enforced by PostgreSQL Row Level Security. Hiding UI is not security.
+
+Business rules:
+
+- Requests must be submitted at least 1 calendar day ahead (`Europe/Bratislava`)
+- Default minimum vehicles: `MIN_VEHICLES_PER_DISPATCH` in `src/config/constants.ts` (also validated in SQL as 3)
+- Partners cannot change request status
+- Termín is valid only after Crystal confirmation
+
+## Scripts
+
+```bash
+npm run dev
+npm run lint
+npm run build
+npm start
+```
 
 ## Deploy on Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Import the Git repository into Vercel.
+2. Set environment variables:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+- `NEXT_PUBLIC_APP_URL=https://btob.crystaldetailing.sk`
+
+3. Deploy.
+4. Domains → add `btob.crystaldetailing.sk` and configure DNS as shown by Vercel.
+5. Update Supabase Auth Site URL + redirect URLs to the production domain.
+
+Architecture notes for Vercel cost/control:
+
+- No custom API layer for ordinary CRUD
+- Browser talks to Supabase Data API with RLS
+- `src/proxy.ts` only refreshes sessions and protects routes
+- TanStack Query caches personalized data (`staleTime`, no polling, no refetch on focus)
+- Calendar loads only the visible month
+- Atomic request creation via one RPC
+
+## Important routes
+
+- `/` → redirects to dashboard or login
+- `/login`
+- `/dashboard`
+- `/orders`
+- `/orders/new`
+- `/orders/[id]`
+- `/calendar`
+- `/unauthorized`
+
+## Future extension points
+
+The v1 model intentionally stays lean. Later additions can include before/after photos, damage reports, PDF work reports, monthly invoices, notifications, recurring schedules, partner pricing, multi-user orgs, vehicle history, audit log, and Google Calendar sync — without rebuilding the portal.
