@@ -19,14 +19,14 @@ import {
   PRIORITIES,
   REQUEST_STATUSES,
   SERVICE_PACKAGES,
-  TIME_WINDOWS,
   TIMEZONE,
+  VEHICLE_CATEGORIES,
 } from "@/config/constants";
 import type {
   RequestPriority,
   RequestStatus,
   ServicePackage,
-  TimeWindow,
+  VehicleCategory,
 } from "@/types";
 
 export function cn(...inputs: ClassValue[]) {
@@ -74,6 +74,42 @@ export function getPackageLabel(value: ServicePackage): string {
   return SERVICE_PACKAGES.find((p) => p.value === value)?.label ?? value;
 }
 
+export function getVehicleCategoryLabel(value: VehicleCategory): string {
+  return VEHICLE_CATEGORIES.find((c) => c.value === value)?.label ?? value;
+}
+
+export function getVehicleCategoryShortLabel(value: VehicleCategory): string {
+  return (
+    VEHICLE_CATEGORIES.find((c) => c.value === value)?.shortLabel ?? value
+  );
+}
+
+export function getVehiclePrimaryId(vehicle: {
+  license_plate?: string | null;
+  vin?: string | null;
+  internal_reference?: string | null;
+}): string {
+  return (
+    vehicle.license_plate?.trim() ||
+    vehicle.vin?.trim() ||
+    vehicle.internal_reference?.trim() ||
+    "Bez identifikátora"
+  );
+}
+
+export function getVehicleDisplayName(vehicle: {
+  brand?: string | null;
+  model?: string | null;
+  make_model?: string | null;
+}): string {
+  const combined = [vehicle.brand, vehicle.model]
+    .map((part) => part?.trim())
+    .filter(Boolean)
+    .join(" ");
+  if (combined) return combined;
+  return vehicle.make_model?.trim() || "Bez značky / modelu";
+}
+
 /** Summary for request-level package (null = mixed packages). */
 export function getRequestPackageLabel(
   value: ServicePackage | null | undefined,
@@ -106,8 +142,18 @@ export function getVehiclesPackageSummary(
     .join(", ");
 }
 
-export function getTimeWindowLabel(value: TimeWindow): string {
-  return TIME_WINDOWS.find((t) => t.value === value)?.label ?? value;
+/** Formats DB/time input values like "09:00:00" or "09:00" for display. */
+export function formatTimeSk(value: string | null | undefined): string {
+  if (!value) return "—";
+  const match = value.match(/^(\d{1,2}):(\d{2})/);
+  if (!match) return value;
+  return `${match[1].padStart(2, "0")}:${match[2]}`;
+}
+
+/** Normalize to HH:mm for form values and RPC payloads. */
+export function toRequestTime(value: string | null | undefined): string {
+  const formatted = formatTimeSk(value);
+  return formatted === "—" ? "09:00" : formatted;
 }
 
 export function getPriorityLabel(value: RequestPriority): string {

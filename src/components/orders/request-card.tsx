@@ -3,9 +3,9 @@ import { ChevronRight } from "lucide-react";
 import { StatusBadge } from "@/components/orders/status-badge";
 import {
   formatDateSk,
+  formatTimeSk,
   getPriorityLabel,
   getRequestPackageLabel,
-  getTimeWindowLabel,
 } from "@/lib/utils";
 import type { ServiceRequestListItem } from "@/types";
 
@@ -33,7 +33,7 @@ export function RequestCard({ request, showOrganization }: RequestCardProps) {
           ) : null}
           <p className="text-sm text-muted">
             {formatDateSk(request.requested_date)} ·{" "}
-            {getTimeWindowLabel(request.time_window)} ·{" "}
+            {formatTimeSk(request.requested_time)} ·{" "}
             {request.vehicle_count} voz.
           </p>
           <p className="text-sm text-muted">

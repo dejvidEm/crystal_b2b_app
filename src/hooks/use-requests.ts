@@ -59,6 +59,7 @@ export function useCreateRequest() {
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.requests.all });
       await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.vehicles.all });
     },
   });
 }

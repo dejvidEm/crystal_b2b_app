@@ -43,6 +43,11 @@ Use the **publishable** (anon) key only. Never put the service-role key in this 
 
 - `supabase/migrations/001_initial_schema.sql`
 - `supabase/migrations/002_vehicle_service_packages.sql`
+- `supabase/migrations/003_vehicle_registry.sql`
+- `supabase/migrations/004_organization_min_vehicles.sql`
+- `supabase/migrations/005_requested_time.sql`
+- `supabase/migrations/006_service_package_nullable.sql`
+- `supabase/migrations/007_request_vehicles_columns.sql`
 
 Optional seed helpers: `supabase/seed.sql`
 
@@ -116,15 +121,15 @@ where id = 'PARTNER_USER_UUID';
 
 | Role | Navigation | Data access |
 |------|------------|-------------|
-| `admin` | Prehľad, Kalendár | All organizations and requests; status updates via RPC |
-| `partner` | Prehľad, Nová požiadavka, Moje požiadavky, Kalendár | Own organization only; create via `create_service_request` RPC |
+| `admin` | Prehľad, Kalendár, Partneri | All organizations and requests; status updates via RPC; per-org minimum vehicles |
+| `partner` | Prehľad, Nová požiadavka, Moje požiadavky, Vozidlá, Kalendár | Own organization only; create via `create_service_request` RPC |
 
 Authorization is enforced by PostgreSQL Row Level Security. Hiding UI is not security.
 
 Business rules:
 
 - Requests must be submitted at least 1 calendar day ahead (`Europe/Bratislava`)
-- Default minimum vehicles: `MIN_VEHICLES_PER_DISPATCH` in `src/config/constants.ts` (also validated in SQL as 3)
+- Minimum vehicles per request is per organization (`organizations.min_vehicles_per_request`, default 3). Admin can change it under Partneri. Enforced in Zod and in `create_service_request`.
 - Partners cannot change request status
 - Termín is valid only after Crystal confirmation
 

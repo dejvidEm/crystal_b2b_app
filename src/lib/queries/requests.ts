@@ -10,13 +10,13 @@ import type {
 import { todayInBratislava } from "@/lib/utils";
 
 const PROFILE_COLUMNS =
-  "id, organization_id, role, full_name, is_active, created_at, updated_at, organization:organizations(id, name, service_address, is_active)";
+  "id, organization_id, role, full_name, is_active, created_at, updated_at, organization:organizations(id, name, service_address, is_active, min_vehicles_per_request)";
 
 const REQUEST_LIST_COLUMNS =
-  "id, reference_code, organization_id, requested_date, time_window, service_package, priority, vehicle_count, status, created_at, organization:organizations(id, name)";
+  "id, reference_code, organization_id, requested_date, requested_time, service_package, priority, vehicle_count, status, created_at, organization:organizations(id, name)";
 
 const REQUEST_DETAIL_COLUMNS =
-  "id, reference_code, organization_id, created_by, requested_date, time_window, service_package, priority, vehicle_count, status, partner_note, admin_note, confirmed_at, started_at, completed_at, created_at, updated_at, organization:organizations(id, name, service_address, phone), vehicles:request_vehicles(id, request_id, license_plate, make_model, internal_reference, note, service_package, sort_order, created_at)";
+  "id, reference_code, organization_id, created_by, requested_date, requested_time, service_package, priority, vehicle_count, status, partner_note, admin_note, confirmed_at, started_at, completed_at, created_at, updated_at, organization:organizations(id, name, service_address, phone), vehicles:request_vehicles(id, request_id, vehicle_id, category, license_plate, vin, make_model, brand, model, color, internal_reference, note, service_package, sort_order, created_at)";
 
 function unwrapRelation<T>(value: T | T[] | null): T | null {
   if (!value) return null;
@@ -29,7 +29,7 @@ function mapListItem(row: Record<string, unknown>): ServiceRequestListItem {
     reference_code: row.reference_code as string,
     organization_id: row.organization_id as string,
     requested_date: row.requested_date as string,
-    time_window: row.time_window as ServiceRequestListItem["time_window"],
+    requested_time: row.requested_time as ServiceRequestListItem["requested_time"],
     service_package:
       row.service_package as ServiceRequestListItem["service_package"],
     priority: row.priority as ServiceRequestListItem["priority"],
@@ -169,7 +169,7 @@ export async function createServiceRequest(
 ): Promise<string> {
   const { data, error } = await supabase.rpc("create_service_request", {
     p_requested_date: input.requested_date,
-    p_time_window: input.time_window,
+    p_requested_time: input.requested_time,
     p_priority: input.priority,
     p_partner_note: input.partner_note ?? null,
     p_vehicles: input.vehicles,

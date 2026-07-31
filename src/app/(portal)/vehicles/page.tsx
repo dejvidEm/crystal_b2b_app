@@ -2,17 +2,17 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { VehiclesPage } from "@/components/vehicles/vehicles-page";
 import { PageLoadingSkeleton } from "@/components/layout/loading-skeleton";
-import { NewRequestForm } from "@/components/orders/new-request-form";
 import { useProfile } from "@/hooks/use-profile";
 
-export default function NewOrderPage() {
+export default function VehiclesRoute() {
   const router = useRouter();
   const { data: profile, isLoading } = useProfile();
 
   useEffect(() => {
     if (!isLoading && profile?.role === "admin") {
-      router.replace("/unauthorized");
+      router.replace("/dashboard");
     }
   }, [profile, isLoading, router]);
 
@@ -24,5 +24,5 @@ export default function NewOrderPage() {
     return null;
   }
 
-  return <NewRequestForm profile={profile} />;
+  return <VehiclesPage />;
 }

@@ -13,9 +13,9 @@ export type ServicePackage =
   | "fleet_interior_care"
   | "vehicle_turnover";
 
-export type TimeWindow = "morning" | "afternoon" | "flexible";
-
 export type RequestPriority = "standard" | "priority";
+
+export type VehicleCategory = "rental" | "staff" | "for_sale";
 
 export type Organization = {
   id: string;
@@ -25,6 +25,7 @@ export type Organization = {
   phone: string | null;
   service_address: string;
   is_active: boolean;
+  min_vehicles_per_request: number;
   created_at: string;
   updated_at: string;
 };
@@ -42,7 +43,11 @@ export type Profile = {
 export type ProfileWithOrganization = Profile & {
   organization: Pick<
     Organization,
-    "id" | "name" | "service_address" | "is_active"
+    | "id"
+    | "name"
+    | "service_address"
+    | "is_active"
+    | "min_vehicles_per_request"
   > | null;
 };
 
@@ -52,8 +57,7 @@ export type ServiceRequest = {
   organization_id: string;
   created_by: string;
   requested_date: string;
-  time_window: TimeWindow;
-  /** Same package for all vehicles, or null when mixed. */
+  requested_time: string;
   service_package: ServicePackage | null;
   priority: RequestPriority;
   vehicle_count: number;
@@ -67,11 +71,49 @@ export type ServiceRequest = {
   updated_at: string;
 };
 
+export type Vehicle = {
+  id: string;
+  organization_id: string;
+  created_by: string;
+  category: VehicleCategory;
+  license_plate: string | null;
+  vin: string | null;
+  internal_reference: string | null;
+  brand: string | null;
+  model: string | null;
+  year: number | null;
+  color: string | null;
+  assigned_person: string | null;
+  notes: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+};
+
+export type VehicleInput = {
+  category: VehicleCategory;
+  license_plate?: string;
+  vin?: string;
+  internal_reference?: string;
+  brand?: string;
+  model?: string;
+  year?: number | null;
+  color?: string;
+  assigned_person?: string;
+  notes?: string;
+};
+
 export type RequestVehicle = {
   id: string;
   request_id: string;
-  license_plate: string;
+  vehicle_id: string | null;
+  category: VehicleCategory | null;
+  license_plate: string | null;
+  vin: string | null;
   make_model: string | null;
+  brand: string | null;
+  model: string | null;
+  color: string | null;
   internal_reference: string | null;
   note: string | null;
   service_package: ServicePackage;
@@ -85,7 +127,7 @@ export type ServiceRequestListItem = Pick<
   | "reference_code"
   | "organization_id"
   | "requested_date"
-  | "time_window"
+  | "requested_time"
   | "service_package"
   | "priority"
   | "vehicle_count"
@@ -103,17 +145,28 @@ export type ServiceRequestDetail = ServiceRequest & {
   vehicles: RequestVehicle[];
 };
 
-export type CreateServiceRequestVehicleInput = {
-  license_plate: string;
-  make_model?: string;
-  internal_reference?: string;
-  note?: string;
-  service_package: ServicePackage;
-};
+export type CreateServiceRequestVehicleInput =
+  | {
+      vehicle_id: string;
+      service_package: ServicePackage;
+      request_note?: string;
+    }
+  | {
+      new_vehicle: VehicleInput;
+      service_package: ServicePackage;
+      request_note?: string;
+    }
+  | {
+      license_plate: string;
+      make_model?: string;
+      internal_reference?: string;
+      note?: string;
+      service_package: ServicePackage;
+    };
 
 export type CreateServiceRequestInput = {
   requested_date: string;
-  time_window: TimeWindow;
+  requested_time: string;
   priority: RequestPriority;
   partner_note?: string;
   vehicles: CreateServiceRequestVehicleInput[];
@@ -127,4 +180,10 @@ export type DashboardStats = {
   nextConfirmed: ServiceRequestListItem | null;
   recentRequests: ServiceRequestListItem[];
   pendingRequests: ServiceRequestListItem[];
+};
+
+export type VehicleListFilters = {
+  category?: VehicleCategory | "all";
+  status?: "active" | "archived" | "all";
+  search?: string;
 };

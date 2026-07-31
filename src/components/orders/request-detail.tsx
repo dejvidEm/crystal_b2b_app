@@ -1,20 +1,24 @@
 "use client";
 
 import Link from "next/link";
+import { AdminStatusActions } from "@/components/orders/admin-status-actions";
 import { StatusBadge } from "@/components/orders/status-badge";
 import { RequestStatusTimeline } from "@/components/orders/request-status-timeline";
+import { VehicleCategoryBadge } from "@/components/vehicles/vehicle-category-badge";
 import { Button } from "@/components/ui/button";
-import { ADMIN_STATUS_ACTIONS, CONFIRMATION_NOTICE } from "@/config/constants";
-import { useUpdateRequestStatus } from "@/hooks/use-requests";
+import { CONFIRMATION_NOTICE } from "@/config/constants";
+import { usePendingCancel } from "@/hooks/use-pending-cancel";
 import {
   formatDateSk,
   formatDateTimeSk,
   getPackageLabel,
   getPriorityLabel,
-  getTimeWindowLabel,
+  formatTimeSk,
+  getVehicleDisplayName,
+  getVehiclePrimaryId,
   getVehiclesPackageSummary,
 } from "@/lib/utils";
-import type { RequestStatus, ServiceRequestDetail, UserRole } from "@/types";
+import type { ServiceRequestDetail, UserRole } from "@/types";
 
 type RequestDetailProps = {
   request: ServiceRequestDetail;
@@ -27,13 +31,8 @@ export function RequestDetail({
   role,
   compact = false,
 }: RequestDetailProps) {
-  const updateStatus = useUpdateRequestStatus();
-  const actions =
-    role === "admin"
-      ? (ADMIN_STATUS_ACTIONS[
-          request.status as keyof typeof ADMIN_STATUS_ACTIONS
-        ] ?? [])
-      : [];
+  const { isPendingCancel, secondsLeft } = usePendingCancel();
+  const cancelling = isPendingCancel(request.id);
 
   return (
     <div className="space-y-6">
@@ -44,6 +43,11 @@ export function RequestDetail({
               {request.reference_code}
             </h2>
             <StatusBadge status={request.status} />
+            {cancelling ? (
+              <span className="text-xs font-medium text-amber-200">
+                Zrušenie o {secondsLeft} s
+              </span>
+            ) : null}
           </div>
           <p className="mt-2 text-sm text-muted">
             {request.organization?.name ?? "Organizácia"}
@@ -64,7 +68,7 @@ export function RequestDetail({
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <InfoItem label="Požadovaný dátum" value={formatDateSk(request.requested_date)} />
-        <InfoItem label="Časové okno" value={getTimeWindowLabel(request.time_window)} />
+        <InfoItem label="Čas" value={formatTimeSk(request.requested_time)} />
         <InfoItem
           label="Balíky"
           value={getVehiclesPackageSummary(request.vehicles)}
@@ -82,24 +86,13 @@ export function RequestDetail({
         <NoteBlock title="Poznámka administrátora" text={request.admin_note} />
       ) : null}
 
-      {actions.length > 0 ? (
-        <div className="flex flex-wrap gap-2">
-          {actions.map((action) => (
-            <Button
-              key={action.status}
-              variant={action.variant}
-              disabled={updateStatus.isPending}
-              onClick={() =>
-                updateStatus.mutate({
-                  requestId: request.id,
-                  status: action.status as RequestStatus,
-                })
-              }
-            >
-              {action.label}
-            </Button>
-          ))}
-        </div>
+      {role === "admin" ? (
+        <AdminStatusActions
+          requestId={request.id}
+          referenceCode={request.reference_code}
+          status={request.status}
+          fullWidth
+        />
       ) : null}
 
       <div className="grid gap-6 lg:grid-cols-[1.4fr_0.8fr]">
@@ -111,21 +104,48 @@ export function RequestDetail({
             {request.vehicles.map((vehicle, index) => (
               <li key={vehicle.id} className="px-4 py-3">
                 <div className="flex flex-wrap items-start justify-between gap-2">
-                  <p className="font-medium text-text">
-                    {index + 1}. {vehicle.license_plate}
-                  </p>
-                  <p className="text-sm text-accent">
-                    {getPackageLabel(vehicle.service_package)}
-                  </p>
+                  <div>
+                    <p className="font-medium text-text">
+                      {index + 1}. {getVehiclePrimaryId(vehicle)}
+                    </p>
+                    <p className="mt-1 text-sm text-muted">
+                      {getVehicleDisplayName(vehicle)}
+                      {vehicle.color ? ` · ${vehicle.color}` : ""}
+                    </p>
+                  </div>
+                  <div className="flex flex-col items-end gap-2">
+                    {vehicle.category ? (
+                      <VehicleCategoryBadge category={vehicle.category} />
+                    ) : null}
+                    <p className="text-sm text-accent">
+                      {getPackageLabel(vehicle.service_package)}
+                    </p>
+                  </div>
                 </div>
-                <p className="mt-1 text-sm text-muted">
-                  {[vehicle.make_model, vehicle.internal_reference]
-                    .filter(Boolean)
-                    .join(" · ") || "Bez ďalších údajov"}
-                </p>
+                {vehicle.vin && vehicle.license_plate ? (
+                  <p className="mt-1 text-xs text-muted">VIN: {vehicle.vin}</p>
+                ) : null}
+                {vehicle.internal_reference &&
+                vehicle.internal_reference !== getVehiclePrimaryId(vehicle) ? (
+                  <p className="mt-1 text-xs text-muted">
+                    Interné: {vehicle.internal_reference}
+                  </p>
+                ) : null}
                 {vehicle.note ? (
                   <p className="mt-1 text-sm text-muted">{vehicle.note}</p>
                 ) : null}
+                {vehicle.vehicle_id && role === "partner" ? (
+                  <Button asChild variant="link" className="mt-1 h-auto px-0 text-xs">
+                    <Link href="/vehicles">Otvoriť v evidencii</Link>
+                  </Button>
+                ) : null}
+                {vehicle.vehicle_id ? (
+                  <p className="mt-1 text-[11px] text-muted">Prepojené s evidenciou</p>
+                ) : (
+                  <p className="mt-1 text-[11px] text-muted">
+                    Historický záznam bez väzby na evidenciu
+                  </p>
+                )}
               </li>
             ))}
           </ul>

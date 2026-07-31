@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  Building2,
   CalendarDays,
+  CarFront,
   ClipboardList,
   LayoutDashboard,
   PlusCircle,
@@ -39,10 +41,22 @@ const NAV_ITEMS: NavItem[] = [
     roles: ["partner"],
   },
   {
+    href: "/vehicles",
+    label: "Vozidlá",
+    icon: CarFront,
+    roles: ["partner"],
+  },
+  {
     href: "/calendar",
     label: "Kalendár",
     icon: CalendarDays,
     roles: ["admin", "partner"],
+  },
+  {
+    href: "/organizations",
+    label: "Partneri",
+    icon: Building2,
+    roles: ["admin"],
   },
 ];
 

@@ -31,11 +31,14 @@ export const SERVICE_PACKAGES = [
   },
 ] as const;
 
-export const TIME_WINDOWS = [
-  { value: "morning" as const, label: "Dopoludnia" },
-  { value: "afternoon" as const, label: "Popoludní" },
-  { value: "flexible" as const, label: "Flexibilne" },
-] as const;
+/** Selectable request times from 01:00 to 23:00. */
+export const REQUEST_TIMES = Array.from({ length: 23 }, (_, index) => {
+  const hours = index + 1;
+  const value = `${String(hours).padStart(2, "0")}:00`;
+  return { value, label: value };
+});
+
+export const DEFAULT_REQUEST_TIME = "09:00";
 
 export const PRIORITIES = [
   { value: "standard" as const, label: "Štandardná" },
@@ -58,6 +61,33 @@ export const TERM_VALIDITY_NOTICE =
 /** Shown after a request has been submitted (e.g. pending detail). */
 export const CONFIRMATION_NOTICE =
   `Požiadavka bola odoslaná. ${TERM_VALIDITY_NOTICE}`;
+
+export const VEHICLE_CATEGORIES = [
+  {
+    value: "rental" as const,
+    label: "Autá z požičovne",
+    shortLabel: "Z požičovne",
+  },
+  {
+    value: "staff" as const,
+    label: "Autá personálu",
+    shortLabel: "Personál",
+  },
+  {
+    value: "for_sale" as const,
+    label: "Autá na predaj",
+    shortLabel: "Na predaj",
+  },
+] as const;
+
+export const VEHICLE_STATUS_FILTERS = [
+  { value: "active" as const, label: "Aktívne" },
+  { value: "archived" as const, label: "Archivované" },
+  { value: "all" as const, label: "Všetky stavy" },
+] as const;
+
+/** Seconds an admin can undo a cancel before partners see it. */
+export const CANCEL_UNDO_SECONDS = 30;
 
 export const ADMIN_STATUS_ACTIONS = {
   pending: [

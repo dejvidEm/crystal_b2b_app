@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { CalendarEvent } from "@/components/calendar/calendar-event";
 import { RequestDetail } from "@/components/orders/request-detail";
 import { Button } from "@/components/ui/button";
@@ -28,7 +28,6 @@ import {
   subMonths,
 } from "@/lib/utils";
 import type { ServiceRequestListItem, UserRole } from "@/types";
-import { CalendarDays } from "lucide-react";
 
 const WEEKDAYS = ["Po", "Ut", "St", "Št", "Pi", "So", "Ne"];
 
@@ -67,7 +66,7 @@ export function MonthCalendar({ role }: { role: UserRole }) {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-xl font-semibold capitalize text-text">
+        <h2 className="min-w-0 flex-1 text-lg font-semibold capitalize text-text sm:text-xl">
           {formatMonthYearSk(month)}
         </h2>
         <div className="flex items-center gap-2">
@@ -75,6 +74,7 @@ export function MonthCalendar({ role }: { role: UserRole }) {
             type="button"
             variant="outline"
             size="icon"
+            className="h-11 w-11 md:h-10 md:w-10"
             aria-label="Predchádzajúci mesiac"
             onClick={() => setMonth((m) => subMonths(m, 1))}
           >
@@ -83,6 +83,7 @@ export function MonthCalendar({ role }: { role: UserRole }) {
           <Button
             type="button"
             variant="secondary"
+            className="h-11 md:h-10"
             onClick={() => setMonth(new Date())}
           >
             Dnes
@@ -91,6 +92,7 @@ export function MonthCalendar({ role }: { role: UserRole }) {
             type="button"
             variant="outline"
             size="icon"
+            className="h-11 w-11 md:h-10 md:w-10"
             aria-label="Nasledujúci mesiac"
             onClick={() => setMonth((m) => addMonths(m, 1))}
           >
@@ -208,25 +210,42 @@ export function MonthCalendar({ role }: { role: UserRole }) {
           if (!open) setSelectedId(null);
         }}
       >
-        <DialogContent className="max-h-[85vh] max-w-3xl overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Detail požiadavky</DialogTitle>
-          </DialogHeader>
-          {detailQuery.isLoading ? <LoadingSkeleton rows={4} /> : null}
-          {detailQuery.data ? (
-            <RequestDetail
-              request={detailQuery.data}
-              role={role}
-              compact
-            />
-          ) : null}
-          {detailQuery.isError ? (
-            <p className="text-sm text-rose-300">
-              {detailQuery.error instanceof Error
-                ? detailQuery.error.message
-                : "Nepodarilo sa načítať detail"}
-            </p>
-          ) : null}
+        <DialogContent
+          hideClose
+          className="flex max-h-[min(90vh,900px)] w-[calc(100%-1rem)] max-w-3xl flex-col gap-0 overflow-hidden p-0 sm:w-[calc(100%-2rem)]"
+        >
+          <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-b border-border bg-surface-elevated px-4 py-3 sm:px-6">
+            <DialogHeader className="pr-0">
+              <DialogTitle>Detail požiadavky</DialogTitle>
+            </DialogHeader>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-10 w-10 shrink-0"
+              aria-label="Zavrieť"
+              onClick={() => setSelectedId(null)}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="overflow-y-auto overscroll-contain px-4 py-4 sm:px-6 sm:py-5">
+            {detailQuery.isLoading ? <LoadingSkeleton rows={4} /> : null}
+            {detailQuery.data ? (
+              <RequestDetail
+                request={detailQuery.data}
+                role={role}
+                compact
+              />
+            ) : null}
+            {detailQuery.isError ? (
+              <p className="text-sm text-rose-300">
+                {detailQuery.error instanceof Error
+                  ? detailQuery.error.message
+                  : "Nepodarilo sa načítať detail"}
+              </p>
+            ) : null}
+          </div>
         </DialogContent>
       </Dialog>
     </div>
