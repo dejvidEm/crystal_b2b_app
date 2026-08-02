@@ -35,9 +35,14 @@ cp .env.example .env.local
 NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_publishable_or_anon_key
 NEXT_PUBLIC_APP_URL=http://localhost:3000
+RESEND_API_KEY=re_xxxxxxxx
+ADMIN_NOTIFICATION_EMAIL=you@example.com
+RESEND_FROM_EMAIL=Crystal B2B <onboarding@resend.dev>
 ```
 
 Use the **publishable** (anon) key only. Never put the service-role key in this app.
+
+`RESEND_API_KEY` + `ADMIN_NOTIFICATION_EMAIL` send you a full order email (with deep link to `/orders/[id]`) whenever a partner creates a request.
 
 4. Apply the migrations in the Supabase SQL Editor (or CLI), in order:
 
@@ -149,7 +154,10 @@ npm start
 
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
-- `NEXT_PUBLIC_APP_URL=https://btob.crystaldetailing.sk`
+- `NEXT_PUBLIC_APP_URL=https://partner.crystaldetailing.sk`
+- `RESEND_API_KEY`
+- `ADMIN_NOTIFICATION_EMAIL`
+- `RESEND_FROM_EMAIL` (optional; default `Crystal B2B <onboarding@resend.dev>`)
 
 3. Deploy.
 4. Domains → add `btob.crystaldetailing.sk` and configure DNS as shown by Vercel.

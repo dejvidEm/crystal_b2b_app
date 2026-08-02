@@ -50,12 +50,37 @@ export function useRequestDetail(id: string) {
   });
 }
 
+async function notifyNewRequest(requestId: string) {
+  try {
+    const response = await fetch("/api/notifications/new-request", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ requestId }),
+    });
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => null)) as {
+        error?: string;
+      } | null;
+      console.error(
+        "New request email notification failed:",
+        payload?.error ?? response.statusText,
+      );
+    }
+  } catch (error) {
+    console.error("New request email notification failed:", error);
+  }
+}
+
 export function useCreateRequest() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (input: CreateServiceRequestInput) =>
-      createServiceRequest(createClient(), input),
+    mutationFn: async (input: CreateServiceRequestInput) => {
+      const id = await createServiceRequest(createClient(), input);
+      // Await so navigation does not abort the request; failures stay silent.
+      await notifyNewRequest(id);
+      return id;
+    },
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: queryKeys.requests.all });
       await queryClient.invalidateQueries({ queryKey: queryKeys.dashboard });
