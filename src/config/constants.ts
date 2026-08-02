@@ -7,6 +7,8 @@ export const MAX_VEHICLES_PER_DISPATCH = 50;
 export const APP_NAME = "Crystal B2B Partner Portal";
 export const APP_SHORT_NAME = "Crystal B2B";
 export const COMPANY_NAME = "Crystal Detailing";
+/** Production portal URL used in emails and absolute links. */
+export const APP_URL = "https://partner.crystaldetailing.sk";
 export const TIMEZONE = "Europe/Bratislava";
 export const LOCALE = "sk-SK";
 

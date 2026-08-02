@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { APP_URL } from "@/config/constants";
 import { createClient } from "@/lib/supabase/server";
 import { fetchRequestDetail } from "@/lib/queries/requests";
 import { sendNewRequestNotification } from "@/lib/email/send-new-request-notification";
@@ -60,10 +61,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Bez oprávnenia." }, { status: 403 });
     }
 
-    const appUrl = (
-      process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
-    ).replace(/\/$/, "");
-    const detailUrl = `${appUrl}/orders/${detail.id}`;
+    const detailUrl = `${APP_URL}/orders/${detail.id}`;
 
     const data = await sendNewRequestNotification({
       request: detail,
