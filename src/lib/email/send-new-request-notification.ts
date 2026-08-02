@@ -1,3 +1,4 @@
+import { render } from "@react-email/render";
 import { Resend } from "resend";
 import { NewRequestEmail } from "@/emails/new-request-email";
 import type { ServiceRequestDetail } from "@/types";
@@ -20,16 +21,20 @@ export async function sendNewRequestNotification(input: {
     throw new Error("Chýba ADMIN_NOTIFICATION_EMAIL.");
   }
 
+  const html = await render(
+    NewRequestEmail({
+      request: input.request,
+      detailUrl: input.detailUrl,
+      submitterName: input.submitterName,
+    }),
+  );
+
   const resend = new Resend(apiKey);
   const { data, error } = await resend.emails.send({
     from,
     to: [to],
     subject: `Nová požiadavka ${input.request.reference_code} · ${input.request.organization?.name ?? "Partner"}`,
-    react: NewRequestEmail({
-      request: input.request,
-      detailUrl: input.detailUrl,
-      submitterName: input.submitterName,
-    }),
+    html,
   });
 
   if (error) {
